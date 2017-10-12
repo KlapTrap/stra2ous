@@ -9,7 +9,7 @@ import { Observable } from 'rxjs/Observable';
 
 import {
     AppMetadataTypes,
-    GetAppMetadataAction,
+    HttpActions,
     WrapperAppMetadataFailed,
     WrapperAppMetadataStart,
     WrapperAppMetadataSuccess,
@@ -18,6 +18,10 @@ import { AppState } from '../app-state';
 import { environment } from './../../../environments/environment';
 
 const { proxyAPIVersion, cfAPIVersion } = environment;
+
+export interface HttpAction extends Action {
+  actions: string[];
+}
 
 @Injectable()
 export class AppMetadataEffect {
@@ -28,7 +32,7 @@ export class AppMetadataEffect {
     private store: Store<AppState>
   ) { }
 
-  @Effect() appMetadataRequest$ = this.actions$.ofType<GetAppMetadataAction>(AppMetadataTypes.APP_METADATA)
+  @Effect() appMetadataRequest$ = this.actions$.ofType<HttpAction>(HttpActions.ACTION)
     .map(appMetadataAction => {
       return new WrapperAppMetadataStart(appMetadataAction);
     });

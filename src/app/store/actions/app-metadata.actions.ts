@@ -1,9 +1,16 @@
-import { Headers, RequestOptions } from '@angular/http';
+import { RequestOptions } from '@angular/http';
 import { Action, compose, Store } from '@ngrx/store';
 import { Observable } from 'rxjs/Rx';
 
 import { AppState } from '../app-state';
 import { AppMetadataRequestState } from '../reducers/app-metadata-request.reducer';
+
+// import { HttpAction } from "../effects/app-metadata.effects";
+
+export const HttpActions = {
+  ACTION: '[HTTP]',
+  ACTION_START: '[HTTP Start]',
+};
 
 export const AppMetadataTypes = {
   APP_METADATA: '[App Metadata] App Metadata',
@@ -45,7 +52,7 @@ export class GetAppMetadataAction implements Action {
     AppMetadataTypes.APP_METADATA_SUCCESS,
     AppMetadataTypes.APP_METADATA_FAILED
   ];
-  type = AppMetadataTypes.APP_METADATA;
+  type = HttpActions.ACTION;
 
   private getRequestOptions(guid: string, cnis: string, type: AppMetadataType) {
     let requestObject: RequestOptions;
@@ -90,7 +97,7 @@ export class UpdateAppMetadataAction implements Action {
     AppMetadataUpdateTypes.APP_METADATA_SUCCESS,
     AppMetadataUpdateTypes.APP_METADATA_FAILED
   ];
-  type = AppMetadataTypes.APP_METADATA;
+  type = HttpActions.ACTION;
 
   private getRequestOptions(guid: string, cnis: string, type: AppMetadataType, updatedMetadata: any) {
     let requestObject: RequestOptions;
@@ -99,7 +106,6 @@ export class UpdateAppMetadataAction implements Action {
         requestObject = new RequestOptions({
           url: `apps/${guid}`,
           method: 'put',
-          headers: new Headers({ 'x-cap-passthrough': 'true' }),
           body: updatedMetadata
         });
         break;
@@ -113,16 +119,17 @@ export class UpdateAppMetadataAction implements Action {
 
 export class WrapperAppMetadataStart implements Action {
   constructor(
-    public appMetadataAction: GetAppMetadataAction
+    public type: string,
+    public appMetadataAction: HttpAction
   ) { }
-  type = AppMetadataTypes.APP_METADATA_START;
+  // type = AppMetadataTypes.APP_METADATA_START;
 }
 
 export class WrapperAppMetadataSuccess implements Action {
   constructor(
     public type: string,
     public metadata: any,
-    public appMetadataAction: GetAppMetadataAction,
+    public appMetadataAction: HttpAction,
   ) { }
   // type = AppMetadataTypes.APP_METADATA_SUCCESS;
 }
