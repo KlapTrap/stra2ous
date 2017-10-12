@@ -4,15 +4,15 @@ import 'rxjs/add/operator/mergeMap';
 import { Injectable } from '@angular/core';
 import { Headers, Http, Request } from '@angular/http';
 import { Actions, Effect } from '@ngrx/effects';
-import { Store } from '@ngrx/store';
+import { Action, Store } from '@ngrx/store';
 import { Observable } from 'rxjs/Observable';
 
 import {
-  AppMetadataTypes,
-  GetAppMetadataAction,
-  WrapperAppMetadataFailed,
-  WrapperAppMetadataStart,
-  WrapperAppMetadataSuccess,
+    AppMetadataTypes,
+    GetAppMetadataAction,
+    WrapperAppMetadataFailed,
+    WrapperAppMetadataStart,
+    WrapperAppMetadataSuccess,
 } from '../actions/app-metadata.actions';
 import { AppState } from '../app-state';
 import { environment } from './../../../environments/environment';
@@ -36,7 +36,9 @@ export class AppMetadataEffect {
   @Effect() appMetadataRequestStart$ = this.actions$.ofType<WrapperAppMetadataStart>(AppMetadataTypes.APP_METADATA_START)
     .withLatestFrom(this.store)
     .mergeMap(([{ appMetadataAction, type }, appState]) => {
-
+      const startAction = { ...appMetadataAction } as Action;
+      startAction.type = appMetadataAction.actions[0];
+      this.store.dispatch(startAction);
       const options = { ...appMetadataAction.options };
       options.url = `/pp/${proxyAPIVersion}/proxy/${cfAPIVersion}/${appMetadataAction.options.url}`;
       options.headers =
@@ -47,13 +49,14 @@ export class AppMetadataEffect {
 
           return Observable.of(
             new WrapperAppMetadataSuccess(
+              appMetadataAction.actions[1],
               response.json(),
               appMetadataAction
             )
           );
         })
         .catch(response => {
-          return Observable.of(new WrapperAppMetadataFailed(response, appMetadataAction));
+          return Observable.of(new WrapperAppMetadataFailed(appMetadataAction.actions[2], response, appMetadataAction));
         });
     });
 

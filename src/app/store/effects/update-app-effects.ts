@@ -39,9 +39,7 @@ export class UpdateAppEffects {
             new GetApplicationSummary(
                 action.apiAction.guid,
                 action.apiAction.cnis,
-            ),
-            // TODO: RC REMOVE
-            new GetAppMetadataAction(action.apiAction.guid, action.apiAction.cnis, AppMetadataProperties.ENV_VARS as AppMetadataType)];
+            )];
         });
 
 }

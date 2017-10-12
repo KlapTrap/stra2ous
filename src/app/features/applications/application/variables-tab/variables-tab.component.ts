@@ -1,15 +1,13 @@
-import { Component, OnInit, ViewChild, ElementRef, OnDestroy, EventEmitter } from '@angular/core';
-import { ApplicationService } from '../../application.service';
-import { Observable, Subscription } from 'rxjs/Rx';
 import { DataSource } from '@angular/cdk/table';
-import { AppMetadataInfo } from '../../../../store/actions/app-metadata.actions';
-import { MdPaginator, PageEvent, MdSort, Sort } from '@angular/material';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
-import { UpdateApplication, UpdateExistingApplicationEnvVar, ApplicationSchema } from '../../../../store/actions/application.actions';
-import { selectEntityUpdateInfo } from '../../../../store/actions/api.actions';
-import { UpdateState } from '../../../../store/reducers/api-request-reducer';
+import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { MdPaginator, MdSort, PageEvent, Sort } from '@angular/material';
 import { Store } from '@ngrx/store';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { Observable, Subscription } from 'rxjs/Rx';
+
+import { AppMetadataInfo, UpdateApplicationEnvVars } from '../../../../store/actions/app-metadata.actions';
 import { AppState } from '../../../../store/app-state';
+import { ApplicationService } from '../../application.service';
 
 interface AppEnvVar {
   name: string;
@@ -71,6 +69,13 @@ export class AppEnvironemtEvnVarsDataSource extends DataSource<AppEnvVar> {
     //   });
     // this.isUpdatingAppEnvVars$ = Observable.of(false);
     _sort.sort({ id: this._defaultSort.active, start: this._defaultSort.direction as 'asc' || 'desc', disableClear: true });
+
+    this.showProgressIndicator = _appService.isFetchingApp$.combineLatest(
+      _appService.isFetchingEnvVars$,
+      _appService.isUpdatingEnvVars$
+    ).map(([isFetchingApp, isFetchingEnvVars, isUpdatingEnvVars]: [boolean, boolean, boolean]) => {
+      return isFetchingApp || isFetchingEnvVars || isUpdatingEnvVars;
+    });
   }
 
   _defaultSort: Sort = { active: 'name', direction: 'asc' };
@@ -99,8 +104,7 @@ export class AppEnvironemtEvnVarsDataSource extends DataSource<AppEnvVar> {
     select: false
   };
 
-  isFetchingAppEnvVars$: Observable<boolean>;
-  isUpdatingAppEnvVars$: Observable<boolean>;
+  showProgressIndicator: Observable<boolean>;
 
   addAppFocusEventEmitter = new EventEmitter<boolean>();
 
@@ -115,9 +119,9 @@ export class AppEnvironemtEvnVarsDataSource extends DataSource<AppEnvVar> {
   }
 
   saveAdd() {
-    const updateApp = this._createUpdateApplication(false);
+    const updateApp = this._createEnvVarsBody(false);
     updateApp.environment_json[this.addRow.name] = this.addRow.value;
-    this._appService.UpdateApplication(updateApp);
+    this._appService.UpdateApplicationEvVars(updateApp);
     this.isAdding$.next(false);
     this.addRow.select = true;
   }
@@ -149,8 +153,8 @@ export class AppEnvironemtEvnVarsDataSource extends DataSource<AppEnvVar> {
   }
 
   selectedDelete() {
-    const updateApp = this._createUpdateApplication(true);
-    this._appService.UpdateApplication(updateApp);
+    const updateApp = this._createEnvVarsBody(true);
+    this._appService.UpdateApplicationEvVars(updateApp);
 
     this.selectedRows.clear();
     this.isSelecting$.next(false);
@@ -161,10 +165,10 @@ export class AppEnvironemtEvnVarsDataSource extends DataSource<AppEnvVar> {
   }
 
   saveEdit(editedRow: AppEnvVar) {
-    const updateApp = this._createUpdateApplication(false);
+    const updateApp = this._createEnvVarsBody(false);
     updateApp.environment_json[editedRow.name] = editedRow.edit.value;
 
-    this._appService.UpdateApplication(updateApp);
+    this._appService.UpdateApplicationEvVars(updateApp);
     delete editedRow.edit;
   }
 
@@ -176,6 +180,8 @@ export class AppEnvironemtEvnVarsDataSource extends DataSource<AppEnvVar> {
     return this._appService.isFetchingEnvVars$
       .combineLatest(this._appService.appEnvVars$)
       .filter(([isFetching, envVars]: [boolean, AppMetadataInfo]) => {
+        console.log('AAAAAAA: isFetching:', isFetching);
+        console.log('AAAAAAA: envVars:', envVars);
         return !isFetching && !!envVars.metadata;
       })
       .map(([isFetching, envVars]: [boolean, AppMetadataInfo]) => {
@@ -187,6 +193,7 @@ export class AppEnvironemtEvnVarsDataSource extends DataSource<AppEnvVar> {
       this._sort.mdSortChange.startWith(this._defaultSort),
     )
       .map(([envVars, pageEvent, filter, sort]: [AppMetadataInfo, PageEvent, string, Sort]) => {
+        console.log('AAAAAAA: :', envVars);
         // TODO: RC caching?? catch no-ops?
         const filtered = this._filterEnvVars(envVars, filter);
 
@@ -257,8 +264,8 @@ export class AppEnvironemtEvnVarsDataSource extends DataSource<AppEnvVar> {
     return envVars.splice(startIndex, this._paginator.pageSize);
   }
 
-  _createUpdateApplication(removeSelected: boolean): UpdateApplication {
-    const updateApp: UpdateApplication = {
+  _createEnvVarsBody(removeSelected: boolean): UpdateApplicationEnvVars {
+    const updateApp: UpdateApplicationEnvVars = {
       environment_json: {}
     };
     for (const row of this.rows) {

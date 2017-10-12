@@ -10,6 +10,8 @@ import {
   GetAppMetadataAction,
   getAppMetadataObservable,
   selectMetadataRequest,
+  UpdateAppMetadataAction,
+  UpdateApplicationEnvVars,
 } from '../../store/actions/app-metadata.actions';
 import { ApplicationSchema, ApplicationSummarySchema } from '../../store/actions/application.actions';
 import {
@@ -218,6 +220,15 @@ export class ApplicationService {
     this.store.dispatch(new UpdateExistingApplication(
       this.appGuid,
       this.cfGuid,
+      { ...updatedApplication }
+    ));
+  }
+
+  UpdateApplicationEvVars(updatedApplication: UpdateApplicationEnvVars) {
+    this.store.dispatch(new UpdateAppMetadataAction(
+      this.appGuid,
+      this.cfGuid,
+      AppMetadataProperties.ENV_VARS as AppMetadataType,
       { ...updatedApplication }
     ));
   }

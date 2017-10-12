@@ -1,3 +1,4 @@
+import { environment } from '../../../environments/environment.prod';
 import { Headers, RequestOptions, URLSearchParams } from '@angular/http';
 import { schema } from 'normalizr';
 
@@ -150,14 +151,15 @@ export class AssociateRouteWithAppApplication implements APIAction {
 }
 
 export interface UpdateApplication {
-    name?: string;
-    instances?: number;
-    memory?: number;
-    enable_ssh?: boolean;
-    environment_json?: Object;
+    name: string;
+    instances: number;
+    memory: number;
+    enable_ssh: boolean;
 }
 
-abstract class UpdateExistingApplicationBase implements APIAction {
+export class UpdateExistingApplication implements APIAction {
+  static updateKey = 'Updating-Existing-Application';
+
     constructor(public guid: string, public cnis: string, application: UpdateApplication) {
         this.options = new RequestOptions();
         this.options.url = `apps/${guid}`;
@@ -177,23 +179,23 @@ abstract class UpdateExistingApplicationBase implements APIAction {
     entityKey = ApplicationSchema.key;
     options: RequestOptions;
 }
-export class UpdateExistingApplication extends UpdateExistingApplicationBase {
-    static updateKey = 'Updating-Existing-Application';
+// export class UpdateExistingApplication extends UpdateExistingApplicationBase {
+//     static updateKey = 'Updating-Existing-Application';
 
-    constructor(public guid: string, public cnis: string, application: UpdateApplication) {
-        super(guid, cnis, application);
-    }
-    updatingKey = UpdateExistingApplication.updateKey;
-}
+//     constructor(public guid: string, public cnis: string, application: UpdateApplication) {
+//         super(guid, cnis, application);
+//     }
+//     updatingKey = UpdateExistingApplication.updateKey;
+// }
 
-// TODO: RC Factor into own process outside of entity update
-export class UpdateExistingApplicationEnvVar extends UpdateExistingApplicationBase {
-    static updateKey = 'Updating-Existing-Application-Env-Var';
+// // TODO: RC Factor into own process outside of entity update
+// export class UpdateExistingApplicationEnvVar extends UpdateExistingApplicationBase {
+//     static updateKey = 'Updating-Existing-Application-Env-Var';
 
-    constructor(public guid: string, public cnis: string, application: UpdateApplication) {
-        super(guid, cnis, application);
-    }
-    updatingKey = UpdateExistingApplicationEnvVar.updateKey;
-}
+//     constructor(public guid: string, public cnis: string, application: UpdateApplication) {
+//         super(guid, cnis, application);
+//     }
+//     updatingKey = UpdateExistingApplicationEnvVar.updateKey;
+// }
 
 
