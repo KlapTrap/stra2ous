@@ -8,18 +8,18 @@ import { Action, Store } from '@ngrx/store';
 import { Observable } from 'rxjs/Observable';
 
 import {
-    AppMetadataTypes,
-    HttpActions,
-    WrapperAppMetadataFailed,
-    WrapperAppMetadataStart,
-    WrapperAppMetadataSuccess,
+  AppMetadataTypes,
+  HttpActions,
+  WrapperAppMetadataFailed,
+  WrapperAppMetadataStart,
+  WrapperAppMetadataSuccess,
 } from '../actions/app-metadata.actions';
 import { AppState } from '../app-state';
 import { environment } from './../../../environments/environment';
 
 const { proxyAPIVersion, cfAPIVersion } = environment;
 
-export interface HttpAction extends Action {
+export interface StoreRequestAction extends Action {
   actions: string[];
 }
 
@@ -32,7 +32,7 @@ export class AppMetadataEffect {
     private store: Store<AppState>
   ) { }
 
-  @Effect() appMetadataRequest$ = this.actions$.ofType<HttpAction>(HttpActions.ACTION)
+  @Effect() appMetadataRequest$ = this.actions$.ofType<StoreRequestAction>(HttpActions.ACTION)
     .map(appMetadataAction => {
       return new WrapperAppMetadataStart(appMetadataAction);
     });
