@@ -17494,7 +17494,8 @@ const testInitialStoreState: AppState = {
           }
         },
         valid: true,
-        uaaError: false
+        uaaError: false,
+        sessionExpiresOn: 1000,
       },
       verifying: false
     },
