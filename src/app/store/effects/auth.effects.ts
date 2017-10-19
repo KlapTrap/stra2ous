@@ -18,11 +18,19 @@ import {
   VERIFY_SESSION,
   VerifySession,
   SESSION_VERIFIED,
+  LogoutFailed,
+  Logout,
+  LOGOUT,
+  LogoutSuccess,
+  LOGOUT_SUCCESS,
+  ResetAuth,
+  RESET_AUTH,
 } from './../actions/auth.actions';
 import { Injectable } from '@angular/core';
 import { Headers, Http, URLSearchParams, RequestOptionsArgs } from '@angular/http';
 import { Action, Store } from '@ngrx/store';
 import { Actions, Effect } from '@ngrx/effects';
+import { Router } from '@angular/router';
 
 
 @Injectable()
@@ -31,7 +39,8 @@ export class AuthEffect {
   constructor(
     private http: Http,
     private actions$: Actions,
-    private store: Store<AppState>
+    private store: Store<AppState>,
+    private router: Router
   ) { }
 
   @Effect() loginRequest$ = this.actions$.ofType<Login>(LOGIN)
@@ -69,7 +78,7 @@ export class AuthEffect {
           return [new VerifiedSession(sessionData, action.updateCNSIs)];
         })
         .catch((err, caught) => {
-          return [new InvalidSession(err.status === 503)];
+          return [new InvalidSession(err.status === 503), new ResetAuth()];
         });
     });
 
@@ -80,6 +89,7 @@ export class AuthEffect {
       }
       return [];
     });
+
 
   @Effect() CnsisSuccess$ = this.actions$.ofType<GetAllCNSISSuccess>(GET_CNSIS_SUCCESS)
     .mergeMap(action => {
@@ -100,5 +110,25 @@ export class AuthEffect {
     .map(() => {
       return new LoginFailed('Invalid session');
     });
+
+  @Effect() logoutRequest$ = this.actions$.ofType<Logout>(LOGOUT)
+    .switchMap(() => {
+      return this.http.post('/pp/v1/auth/logout', {})
+        .map(data => new LogoutSuccess())
+        .catch((err, caught) => [new LogoutFailed(err)]);
+    });
+
+  @Effect() logoutSuccess$ = this.actions$.ofType<LogoutSuccess>(LOGOUT_SUCCESS)
+    .map(() => {
+      return new ResetAuth();
+    });
+
+  @Effect() resetAuth$ = this.actions$.ofType<ResetAuth>(RESET_AUTH)
+    .mergeMap(() => {
+      // TODO: RC Reset all entities, pagination from store?
+      this.router.navigateByUrl('/login');
+      return [];
+    });
+
 
 }
